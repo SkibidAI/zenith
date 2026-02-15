@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenith | 2026 Intelligence</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <style>
+        :root {
+            --bg: #050505;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-thick: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.12);
+            --accent: #ffffff; /* Changed from Blue to White */
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.45);
+            --curve: cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; outline: none; }
+        
+        body, html { 
+            margin: 0; padding: 0; height: 100vh; overflow: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg);
+            color: var(--text);
+        }
+
+        .mesh-bg {
+            position: fixed; inset: 0; z-index: -1;
+            background: radial-gradient(at 0% 0%, #1a1a1a 0%, transparent 50%),
+                        radial-gradient(at 100% 100%, #0a0c20 0%, transparent 50%),
+                        radial-gradient(at 50% 50%, #050505 0%, #000 100%);
+        }
+
+        #landing-page {
+            position: fixed; inset: 0; z-index: 1000; background: #000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: 1.2s var(--curve);
+        }
+        #landing-page.hide { opacity: 0; transform: scale(1.1); pointer-events: none; }
+        .ios-logo { font-size: 7rem; font-weight: 800; letter-spacing: -5px; filter: blur(10px); animation: logo-reveal 2s forwards; }
+
+        @keyframes logo-reveal { to { filter: blur(0); letter-spacing: -2px; } }
+
+        #main-stage { display: grid; grid-template-columns: 280px 1fr; height: 100vh; opacity: 0; transition: 1.5s var(--curve); }
+        #main-stage.visible { opacity: 1; }
+
+        .sidebar {
+            background: rgba(255,255,255,0.02); backdrop-filter: blur(60px);
+            border-right: 1px solid var(--border); padding: 50px 25px;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        #history-box {
+            max-height: 0; overflow: hidden; opacity: 0;
+            transition: 0.8s var(--curve); display: flex; flex-direction: column; gap: 10px;
+        }
+        #history-box.active { max-height: 500px; opacity: 1; margin-top: 20px; }
+
+        .ios-btn {
+            background: var(--glass); border: 1px solid var(--border);
+            border-top-color: rgba(255,255,255,0.2);
+            padding: 14px 24px; border-radius: 20px; cursor: pointer;
+            color: var(--text); font-weight: 600; display: flex; align-items: center; gap: 12px;
+            transition: 0.4s var(--curve); position: relative;
+        }
+        .ios-btn:hover { background: var(--glass-thick); transform: translateY(-2px); border-color: var(--accent); }
+        .ios-btn:active { transform: scale(0.94); filter: brightness(1.2); }
+
+        .prompt-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: 0.4s var(--curve);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .prompt-card:hover { background: var(--glass-thick); border-color: var(--accent); transform: scale(1.02); }
+        .prompt-card .category { font-size: 0.65rem; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
+        .prompt-card .text { font-size: 0.95rem; line-height: 1.4; color: var(--text-dim); font-weight: 400; }
+
+        .island-container {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 60%; max-width: 800px; z-index: 100;
+        }
+        .island-bar {
+            background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--border); border-radius: 40px; padding: 10px 10px 10px 25px;
+            display: flex; align-items: center; gap: 15px; transition: 0.5s var(--curve);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .island-bar:focus-within { width: 105%; transform: translateX(-2.5%); border-color: var(--accent); }
+
+        textarea { flex: 1; background: transparent; border: none; color: white; resize: none; font-size: 1.1rem; font-family: inherit; }
+
+        .chat-feed { flex: 1; overflow-y: auto; padding: 100px 18% 250px; display: none; scroll-behavior: smooth; }
+        .msg { margin-bottom: 40px; animation: ios-slide 0.6s var(--curve); }
+        .role { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 10px; opacity: 0.5; }
+        .content { font-size: 1.2rem; line-height: 1.6; opacity: 0.95; }
+
+        @keyframes ios-slide { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        #settings-tray {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(50px);
+            z-index: 2000; transform: translateY(100%); transition: 0.8s var(--curve);
+            display: flex; align-items: center; justify-content: center;
+        }
+        #settings-tray.open { transform: translateY(0); }
+        .settings-card { background: var(--glass); border: 1px solid var(--border); padding: 50px; border-radius: 40px; width: 500px; }
+    </style>
+</head>
+<body>
+
+    <div class="mesh-bg"></div>
+
+    <div id="landing-page">
+        <div class="ios-logo">Zenith</div>
+        <button class="ios-btn" style="margin-top: 40px;" onclick="boot()">Unlock Intelligence</button>
+    </div>
+
+    <div id="main-stage">
+        <div class="sidebar">
+            <h1 style="font-size: 1.5rem; letter-spacing: -1px;">Zenith</h1>
+            <button class="ios-btn" onclick="location.reload()"><i class="fas fa-plus-circle"></i> New Flow</button>
+            
+            <div id="history-box">
+                <p style="font-size: 0.6rem; text-transform:uppercase; color:var(--text-dim); letter-spacing:2px;">Previous</p>
+                <div id="history-list"></div>
+            </div>
+
+            <button class="ios-btn" style="margin-top:auto" onclick="toggleSettings(true)"><i class="fas fa-sliders-h"></i> Adjust</button>
+        </div>
+
+        <div style="position: relative; display: flex; flex-direction: column;">
+            <div id="welcome" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
+                <h2 style="font-size: 4rem; letter-spacing:-3px; margin:0">How can I help?</h2>
+                <div id="prompt-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 700px; margin-top: 50px;">
+                    </div>
+            </div>
+
+            <div class="chat-feed" id="chat-feed"></div>
+
+            <div class="island-container">
+                <div class="island-bar">
+                    <textarea id="user-input" rows="1" placeholder="Type to Zenith..." oninput="autoResize(this)" onkeydown="checkKey(event)"></textarea>
+                    <button id="send-btn" class="ios-btn" style="padding: 10px 15px; border-radius: 50%; color: #000; background: #fff;" onclick="send()">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-tray">
+        <div class="settings-card">
+            <h2>Interface Control</h2>
+            <p style="color:var(--text-dim)">Adjust the neural bridge connection.</p>
+            <input type="password" id="api-input" placeholder="Enter Groq API Key..." style="width:100%; padding:20px; background:rgba(0,0,0,0.5); border:1px solid var(--border); border-radius:20px; color:white; margin-top:20px;">
+            <button class="ios-btn" style="width:100%; margin-top: 20px; justify-content:center" onclick="saveKey()">Connect Link</button>
+            <button class="ios-btn" style="width:100%; margin-top: 10px; justify-content:center; border:none; background:transparent;" onclick="toggleSettings(false)">Dismiss</button>
+        </div>
+    </div>
+
+    <script>
+        let apiKey = localStorage.getItem('zenith_key');
+        let history = JSON.parse(localStorage.getItem('zenith_hist') || '[]');
+
+        const promptPool = [
+            { cat: "Code", text: "Create a modern React component for a glass-morphic dashboard." },
+            { cat: "Economics", text: "Explain the potential impact of AI on the 2026 job market." },
+            { cat: "Creative", text: "Write a cyberpunk short story about a city that runs on moonlight." },
+            { cat: "Strategy", text: "Draft a 5-year plan for a carbon-capture startup based in Iceland." },
+            { cat: "Philosophy", text: "Discuss the ethics of digital consciousness in the late 21st century." },
+            { cat: "Wellness", text: "Design a 10-minute mindfulness routine for high-stress developers." }
+        ];
+
+        function boot() {
+            document.getElementById('landing-page').classList.add('hide');
+            document.getElementById('main-stage').classList.add('visible');
+            generatePrompts();
+            renderHistory();
+        }
+
+        function generatePrompts() {
+            const grid = document.getElementById('prompt-grid');
+            const shuffled = [...promptPool].sort(() => 0.5 - Math.random()).slice(0, 4);
+            grid.innerHTML = shuffled.map(p => `
+                <div class="prompt-card" onclick="fill('${p.text}')">
+                    <div class="category">${p.cat}</div>
+                    <div class="text">${p.text}</div>
+                </div>
+            `).join('');
+        }
+
+        function toggleSettings(show) { document.getElementById('settings-tray').classList.toggle('open', show); }
+        
+        function saveKey() {
+            const k = document.getElementById('api-input').value;
+            if(k) { localStorage.setItem('zenith_key', k); location.reload(); }
+        }
+
+        function renderHistory() {
+            const box = document.getElementById('history-box');
+            const list = document.getElementById('history-list');
+            if(history.length > 0) {
+                box.classList.add('active');
+                list.innerHTML = history.map(h => `<div class="ios-btn" style="background:transparent; border:none; padding:10px 0; font-size:0.8rem; color:var(--text-dim); justify-content:flex-start;">${h}</div>`).join('');
+            }
+        }
+
+        function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+        function checkKey(e) { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
+        function fill(t) { document.getElementById('user-input').value = t; send(); }
+
+        async function send() {
+            const input = document.getElementById('user-input');
+            const text = input.value.trim();
+            if(!text || !apiKey) return;
+
+            document.getElementById('welcome').style.display = 'none';
+            const feed = document.getElementById('chat-feed');
+            feed.style.display = 'block';
+            input.value = ''; autoResize(input);
+
+            appendMsg('User', text);
+            
+            if(!history.includes(text.substring(0,20))) {
+                history.unshift(text.substring(0, 20) + '...');
+                localStorage.setItem('zenith_hist', JSON.stringify(history.slice(0,5)));
+                renderHistory();
+            }
+
+            const id = appendMsg('Zenith', 'Connecting...');
+
+            try {
+                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [{role: "user", content: text}]
+                    })
+                });
+                const data = await res.json();
+                document.getElementById(id).innerHTML = marked.parse(data.choices[0].message.content);
+                feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+            } catch (err) { document.getElementById(id).innerText = "The link was severed."; }
+        }
+
+        function appendMsg(role, content) {
+            const id = 'm-' + Date.now();
+            const div = document.createElement('div');
+            div.className = 'msg';
+            div.innerHTML = `<div class="role">${role}</div><div class="content" id="${id}">${content}</div>`;
+            document.getElementById('chat-feed').appendChild(div);
+            document.getElementById('chat-feed').scrollTop = document.getElementById('chat-feed').scrollHeight;
+            return id;
+        }
+    </script>
+</body>
+</html>
